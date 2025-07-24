@@ -5,12 +5,7 @@ from django.utils import timezone
 
 
 def index(request):
-    post_list = Post.objects.select_related(
-        'category', 'location', 'author'
-    ).filter(
-        Q(is_published=True)
-        & Q(category__is_published=True)
-        & Q(pub_date__lte=timezone.now())).order_by('-id')[0:5]
+    post_list = Post.objects.annotate_comments_index()
     return render(request, 'blog/index.html', {'post_list': post_list})
 
 
@@ -18,19 +13,15 @@ def post_detail(request, id):
     post = get_object_or_404(
         Post,
         pk=id,
-        is_published=1,
+        is_published=True,
         pub_date__lte=timezone.now(),
-        category__is_published=1
+        category__is_published=True
     )
     return render(request, 'blog/detail.html', {'post': post})
 
 
 def category_posts(request, category_slug):
-    post_list = Post.objects.select_related('category').filter(
-        Q(category__slug=category_slug)
-        & Q(is_published=True)
-        & Q(pub_date__lte=timezone.now())
-    )
+    post_list = Post.objects.annotate_comments_category_posts(category_slug)
     category = get_object_or_404(Category, slug=category_slug, is_published=1)
     context = {
         'category': category,

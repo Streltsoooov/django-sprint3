@@ -1,8 +1,38 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.utils import timezone
 
 
 User = get_user_model()
+title_name = models.CharField('Заголовок', max_length=256)
+
+
+class CustomOS(models.QuerySet):
+    def published(self):
+        return self.select_related(
+            'category',
+            'location',
+            'author'
+        ).filter(
+            Q(is_published=True)
+            & Q(pub_date__lte=timezone.now())
+        )
+
+
+class CustomManager(models.Manager):
+    def get_queryset(self):
+        return CustomOS(self.model)
+
+    def annotate_comments_index(self):
+        return self.get_queryset().published().filter(
+            category__is_published=True
+        )[0:5]
+
+    def annotate_comments_category_posts(self, category_slug):
+        return self.get_queryset().published().filter(
+            category__slug=category_slug
+        )
 
 
 class BaseModel(models.Model):
@@ -18,7 +48,7 @@ class BaseModel(models.Model):
 
 
 class Category(BaseModel):
-    title = models.CharField('Заголовок', max_length=256)
+    title = title_name
     description = models.TextField('Описание')
     slug = models.SlugField(
         'Идентификатор',
@@ -47,12 +77,6 @@ class Location(BaseModel):
 
 
 class Post(BaseModel):
-    title = models.CharField('Заголовок', max_length=256)
-    text = models.TextField('Текст')
-    pub_date = models.DateTimeField(
-        'Дата и время публикации',
-        help_text='Если установить дату и время в будущем — можно делать '
-        'отложенные публикации.')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -72,9 +96,18 @@ class Post(BaseModel):
         verbose_name='Категория'
     )
 
+    title = title_name
+    text = models.TextField('Текст')
+    pub_date = models.DateTimeField(
+        'Дата и время публикации',
+        help_text='Если установить дату и время в будущем — можно делать '
+        'отложенные публикации.')
+    objects = CustomManager()
+
     class Meta():
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.title
