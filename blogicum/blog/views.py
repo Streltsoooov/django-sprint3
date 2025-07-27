@@ -3,7 +3,7 @@ from .models import Post, Category
 from django.utils import timezone
 
 
-def index(request):  
+def index(request):
     post_list = Post.objects.published().annotate_comments_index()
     return render(request, 'blog/index.html', {'post_list': post_list})
 
