@@ -3,8 +3,8 @@ from .models import Post, Category
 from django.utils import timezone
 
 
-def index(request):
-    post_list = Post.objects.annotate_comments_index()
+def index(request):  
+    post_list = Post.objects.published().annotate_comments_index()
     return render(request, 'blog/index.html', {'post_list': post_list})
 
 
@@ -20,8 +20,11 @@ def post_detail(request, id):
 
 
 def category_posts(request, category_slug):
-    post_list = Post.objects.annotate_comments_category_posts(category_slug)
-    category = get_object_or_404(Category, slug=category_slug, is_published=1)
+    category = get_object_or_404(
+        Category,
+        slug=category_slug,
+        is_published=True)
+    post_list = category.post_set.filter(is_published=True, pub_date__lte=timezone.now())
     context = {
         'category': category,
         'post_list': post_list
