@@ -15,7 +15,7 @@ class SelectFK(models.QuerySet):
             Q(is_published=True)
             & Q(category__is_published=True)
             & Q(pub_date__lte=timezone.now())).order_by('-id')[0:5]
-    
+
     def annotate_comments_post(self, category_slug):
         return self.filter(
             Q(category__slug=category_slug)
