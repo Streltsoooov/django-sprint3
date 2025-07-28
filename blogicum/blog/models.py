@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from .managers import SelectFK
+from .managers import PublishedQuerySet
 
 
 User = get_user_model()
@@ -52,7 +52,8 @@ class Post(BaseModel):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор публикации'
+        verbose_name='Автор публикации',
+        related_name='author_posts'
     )
     location = models.ForeignKey(
         Location,
@@ -65,7 +66,8 @@ class Post(BaseModel):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        verbose_name='Категория'
+        verbose_name='Категория',
+        related_name='category_posts'
     )
 
     title = title_name
@@ -74,7 +76,7 @@ class Post(BaseModel):
         'Дата и время публикации',
         help_text='Если установить дату и время в будущем — можно делать '
         'отложенные публикации.')
-    objects = SelectFK.as_manager()
+    objects = PublishedQuerySet.as_manager()
 
     class Meta():
         verbose_name = 'публикация'

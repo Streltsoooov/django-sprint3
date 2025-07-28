@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.db.models import Q
 
 
-class SelectFK(models.QuerySet):
+class PublishedQuerySet(models.QuerySet):
     def published(self):
         return self.select_related(
             'category',
